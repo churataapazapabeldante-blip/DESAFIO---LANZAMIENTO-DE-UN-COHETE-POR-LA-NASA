@@ -1,1 +1,222 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Misión NASA 1962 · Simulador del método de Euler</title>
+<style>
+:root{--bg:#e9f0ef;--card:#f8fbfa;--ink:#11263a;--mut:#4a5f6f;--line:#bdd0cf;--eu:#c9421a;--he:#7b3fb3;--rk:#0b7a5a;--ex:#1d4f91;--ok:#0b7a5a;--bad:#b3261e;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0c1a26;--card:#132434;--ink:#e5eef3;--mut:#9db4c3;--line:#2a4256;--eu:#ff8a5c;--he:#c39bf0;--rk:#4fd1a1;--ex:#7db2ff;--ok:#4fd1a1;--bad:#ff8c84;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0c1a26;--card:#132434;--ink:#e5eef3;--mut:#9db4c3;--line:#2a4256;--eu:#ff8a5c;--he:#c39bf0;--rk:#4fd1a1;--ex:#7db2ff;--ok:#4fd1a1;--bad:#ff8c84;color-scheme:dark}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 52px);scroll-behavior:smooth}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{padding:40px 20px 28px;background:linear-gradient(var(--line) 1px,transparent 1px) 0 0/28px 28px,linear-gradient(90deg,var(--line) 1px,transparent 1px) 0 0/28px 28px;border-bottom:2px solid var(--ink)}
+.w{max-width:1000px;margin:0 auto}
+h1{font:700 clamp(30px,6vw,54px)/1.05 Georgia,"Times New Roman",serif;margin:0 0 10px;letter-spacing:-.5px}
+header p{max-width:62ch;margin:0;color:var(--mut)}
+nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--card);border-bottom:1px solid var(--line);overflow-x:auto;white-space:nowrap}
+nav .w{display:flex;gap:2px;padding:0 10px}
+nav a{padding:12px 11px;color:var(--ink);text-decoration:none;font-size:14px}
+nav a:hover,nav a:focus-visible{background:var(--bg);outline:none;box-shadow:inset 0 -3px var(--ex)}
+main{padding:10px 16px 60px}
+section{margin-top:34px}
+h2{font:700 28px/1.2 Georgia,serif;margin:0 0 12px;border-bottom:2px solid var(--ink);padding-bottom:6px}
+h3{margin:18px 0 6px;font-size:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:16px;margin:12px 0}
+.eq{font:15px/1.7 "Courier New",ui-monospace,monospace;background:var(--bg);border-left:4px solid var(--ex);padding:8px 12px;margin:8px 0;overflow-x:auto;white-space:pre}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+label{display:block;font-size:13px;color:var(--mut)}
+input,select{width:100%;padding:8px;font:inherit;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink)}
+input:focus-visible,select:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var(--ex);outline-offset:1px}
+button{font:inherit;padding:9px 14px;border:1px solid var(--ink);border-radius:4px;background:var(--ink);color:var(--bg);cursor:pointer}
+button.s{background:transparent;color:var(--ink)}
+.chk{display:inline-flex;align-items:center;gap:6px;margin:8px 14px 0 0;color:var(--ink);font-size:15px}.chk input{width:auto}
+.res{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+.res .card{margin:0;border-top:5px solid var(--c)}
+.res b{font-size:13px;color:var(--mut);font-weight:600}
+.big{font:700 22px/1.3 "Courier New",monospace}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:6px;max-height:420px}
+table{border-collapse:collapse;width:100%;font:14px "Courier New",monospace;background:var(--card)}
+th,td{padding:6px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th{position:sticky;top:0;background:var(--ink);color:var(--bg);font-family:system-ui;font-size:13px}
+.bd{font:700 12px system-ui;padding:2px 8px;border-radius:10px;color:#fff}.y{background:var(--ok);color:#fff}.n{background:var(--bad);color:#fff}
+svg{width:100%;height:auto;display:block}.gl{stroke:var(--line);stroke-width:1}.tx{fill:var(--mut);font:11px system-ui}.lb{fill:var(--ink);font:12px system-ui}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+details{background:var(--card);border:1px solid var(--line);border-radius:6px;margin:8px 0;padding:10px 14px}summary{cursor:pointer;font-weight:600}
+.note{color:var(--mut);font-size:14px}
+</style>
+</head>
+<body>
+<header><div class="w"><h1>Misión espacial NASA 1962</h1><p>Simulador del método de Euler para el despegue de un cohete experimental. Cambia los parámetros, compara Euler, Heun y RK4 con la solución exacta y comprueba cuánto error cometes en cada paso.</p></div></header>
+<nav><div class="w"><a href="#contexto">Contexto</a><a href="#modelo">Modelo</a><a href="#simulador">Simulador</a><a href="#pasos">Paso a paso</a><a href="#tabla">Tabla</a><a href="#graficas">Gráficas</a><a href="#analitica">Solución exacta</a><a href="#error">Error</a><a href="#respuestas">Respuestas</a><a href="#reflexion">Reflexión</a></div></nav>
+<main class="w">
+
+<section id="contexto"><h2>1. Contexto histórico</h2>
+<p>En 1962 la NASA preparaba la misión <i>Friendship 7</i>, con la que John Glenn orbitaría la Tierra. En la película <i>Talentos ocultos</i>, Katherine Johnson, Dorothy Vaughan y Mary Jackson calculan trayectorias y verifican a mano los resultados de las computadoras electrónicas. La película menciona el método de Euler para el regreso de la cápsula; no significa que fuera el único método usado en la misión real.</p>
+<p><b>Tu misión:</b> calcular velocidad y altura de un cohete durante los primeros 20 s, aproximando con Euler paso a paso y contrastando con la solución analítica. Los datos son ficticios y didácticos.</p></section>
+
+<section id="modelo"><h2>2. Modelo matemático</h2>
+<p>Con la segunda ley de Newton (<b>F = ma</b>) y el sentido positivo hacia arriba actúan tres fuerzas: el empuje <b>T</b>, el peso <b>mg</b> (hacia abajo) y la resistencia lineal <b>kv</b> (opuesta al movimiento).</p>
+<div class="eq">m·dv/dt = T − m·g − k·v
+dv/dt  = T/m − g − (k/m)·v
+dy/dt  = v</div>
+<div class="eq" id="modeloNum"></div>
+<p class="note">Es un modelo simplificado: un cohete real pierde masa al quemar combustible y la resistencia del aire es más compleja.</p></section>
+
+<section id="simulador"><h2>3. Simulador</h2>
+<div class="card"><div class="grid">
+<div><label for="m">Masa m (kg)</label><input id="m" type="number" value="1000" step="any" min="0.001"></div>
+<div><label for="T">Empuje T (N)</label><input id="T" type="number" value="15000" step="any"></div>
+<div><label for="g">Gravedad g (m/s²)</label><input id="g" type="number" value="9.81" step="any"></div>
+<div><label for="k">Resistencia k (kg/s)</label><input id="k" type="number" value="100" step="any" min="0"></div>
+<div><label for="v0">Velocidad inicial v₀ (m/s)</label><input id="v0" type="number" value="0" step="any"></div>
+<div><label for="y0">Altura inicial y₀ (m)</label><input id="y0" type="number" value="0" step="any"></div>
+<div><label for="tf">Tiempo final (s)</label><input id="tf" type="number" value="20" step="any" min="0.1"></div>
+<div><label for="h">Paso h (s)</label><input id="h" type="number" value="2" step="any" min="0.05"></div></div>
+<div><span class="chk"><label class="chk"><input type="checkbox" id="cE" checked> Euler</label></span><label class="chk"><input type="checkbox" id="cH"> Heun (ampliación)</label><label class="chk"><input type="checkbox" id="cR"> RK4 (ampliación)</label></div>
+<p><button id="reset" class="s">Restaurar valores del desafío</button></p>
+<p id="warn" class="note"></p></div>
+<div class="res" id="cards"></div></section>
+
+<section id="pasos"><h2>4. Euler paso a paso</h2>
+<p>Fórmula general: <b>z(n+1) = z(n) + h·f(tₙ, zₙ)</b>. Para este cohete se aplica a las dos ecuaciones, usando siempre los valores del paso anterior:</p>
+<div class="eq">v(n+1) = v(n) + h·(a − c·v(n))      con a = T/m − g,  c = k/m
+y(n+1) = y(n) + h·v(n)</div>
+<div class="card" id="steps"></div>
+<p class="note">Fíjate en que y₁ vale 0 si v₀ = 0: Euler usa la velocidad del inicio del intervalo para todo el intervalo. El cohete sí sube; es un error de discretización.</p></section>
+
+<section id="tabla"><h2>5. Tabla de iteraciones y errores</h2>
+<label for="tm" style="max-width:260px">Método mostrado</label><select id="tm" style="max-width:260px"><option value="euler">Euler</option><option value="heun">Heun</option><option value="rk4">RK4</option></select>
+<div class="tw" style="margin-top:10px"><table id="tab"></table></div>
+<p class="note">Error absoluto: E = |valor exacto − valor aproximado|.</p></section>
+
+<section id="graficas"><h2>6. Gráficas comparativas</h2>
+<div class="two"><div class="card"><svg id="gv" role="img" aria-label="Velocidad contra tiempo"></svg></div><div class="card"><svg id="gy" role="img" aria-label="Altura contra tiempo"></svg></div></div>
+<div class="card"><svg id="ge" role="img" aria-label="Error de velocidad contra tiempo"></svg></div>
+<p id="gtxt"></p></section>
+
+<section id="analitica"><h2>7. Solución analítica</h2>
+<p>La ecuación v' = a − c·v es de variables separables (con a = T/m − g y c = k/m):</p>
+<div class="eq">dv/(a − c·v) = dt
+−(1/c)·ln|a − c·v| = t + C
+a − c·v = C′·e^(−c·t)
+v(t) = (a/c) + (v₀ − a/c)·e^(−c·t)          ← usa v(0) = v₀</div>
+<p>Integrando v(t) y usando y(0) = y₀:</p>
+<div class="eq">y(t) = y₀ + (a/c)·t + (v₀ − a/c)·(1 − e^(−c·t))/c</div>
+<p>Si k = 0 (c = 0): v = v₀ + a·t  y  y = y₀ + v₀·t + a·t²/2.</p>
+<div class="eq" id="anNum"></div>
+<p class="note">Con los datos del desafío: v(t) = 51,9·(1 − e^(−0,1t)) e y(t) = 51,9·t − 519·(1 − e^(−0,1t)). La velocidad terminal es a/c = 51,9 m/s.</p></section>
+
+<section id="error"><h2>8. Qué pasa al reducir el paso</h2>
+<p>Se calcula el error en t = tiempo final para varios pasos. Límites del desafío: error de velocidad &lt; <input id="tv" type="number" value="0.5" step="any" style="width:80px;display:inline"> m/s y error de altura &lt; <input id="ty" type="number" value="5" step="any" style="width:80px;display:inline"> m.</p>
+<div class="tw"><table id="conv"></table></div>
+<div class="card"><svg id="gc" role="img" aria-label="Error contra paso en escala logarítmica"></svg></div>
+<p id="ord"></p></section>
+
+<section id="respuestas"><h2>9. Respuestas a las preguntas del desafío</h2><div id="resp"></div></section>
+
+<section id="reflexion"><h2>10. Preguntas de reflexión</h2>
+<details><summary>1. ¿Por qué era importante verificar los cálculos antes de enviar astronautas?</summary><p>Porque un error numérico se traduce en decisiones físicas: una trayectoria mal calculada pone vidas en riesgo y no se puede corregir después del lanzamiento. Verificar con otro método, otra persona o una solución exacta detecta fallos de modelo, de programación y de redondeo.</p></details>
+<details><summary>2. ¿Qué riesgos hay con un paso demasiado grande?</summary><p>El error de truncamiento crece (en Euler, proporcional a h), el cohete puede parecer más rápido o más lento de lo real y, en problemas rígidos u oscilantes, la solución puede volverse inestable. Prueba h = 10 con k alto en el simulador.</p></details>
+<details><summary>3. ¿Por qué una aproximación razonable puede acumular errores importantes?</summary><p>Cada paso parte del resultado aproximado del anterior, así que el error local de cada paso se suma y se propaga. Además la altura integra la velocidad, y un pequeño sesgo en v se acumula en y.</p></details>
+<details><summary>4. ¿Qué variables reales no se consideraron?</summary><p>Pérdida de masa por consumo de combustible, empuje variable, gravedad que cambia con la altura, densidad del aire y resistencia proporcional a v², viento, rotación de la Tierra, trayectoria no vertical y etapas del cohete.</p></details>
+<details><summary>5. ¿Por qué una trayectoria lunar necesita un modelo más complejo?</summary><p>Hay atracción simultánea de la Tierra, la Luna y el Sol, movimiento en tres dimensiones, cambios de masa y maniobras, ventanas de lanzamiento y tolerancias muy pequeñas durante días de vuelo; un pequeño error inicial se amplifica a lo largo del trayecto.</p></details>
+
+<h3>Conclusión</h3>
+<p>Con h = 2 s, Euler da v = 46,3273 m/s y y = 574,7272 m a los 20 s; la solución exacta da 44,8761 m/s y 589,2390 m. Obtener un número no basta: hay que medir su error y decidir si cumple la precisión exigida. Con el mismo paso, RK4 es mucho más preciso que Heun y Euler porque su error local es de orden h⁵ (global h⁴), frente a h³ (global h²) de Heun y h² (global h) de Euler.</p></section>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const f=(x,d=4)=>Number.isFinite(x)?x.toLocaleString('es-ES',{minimumFractionDigits:d,maximumFractionDigits:d}):'—';
+const NM={euler:'Euler',heun:'Heun',rk4:'RK4'},COL={euler:'var(--eu)',heun:'var(--he)',rk4:'var(--rk)'};
+const DEF={m:1000,T:15000,g:9.81,k:100,v0:0,y0:0,tf:20,h:2},IDS=Object.keys(DEF);
+const P=()=>{const p={};IDS.forEach(i=>p[i]=+$(i).value);return p};
+const A=p=>p.T/p.m-p.g,C=p=>p.k/p.m,F=(p,v)=>A(p)-C(p)*v;
+function exact(p,t){const a=A(p),c=C(p);if(c===0)return{v:p.v0+a*t,y:p.y0+p.v0*t+a*t*t/2};const vi=a/c,e=Math.exp(-c*t);return{v:vi+(p.v0-vi)*e,y:p.y0+vi*t+(p.v0-vi)*(1-e)/c}}
+function run(p,m,h){const n=Math.round(p.tf/h);let v=p.v0,y=p.y0;const r=[{t:0,v,y}];
+for(let i=0;i<n;i++){let nv,ny;
+if(m==='euler'){nv=v+h*F(p,v);ny=y+h*v}
+else if(m==='heun'){const k1=F(p,v),vp=v+h*k1,k2=F(p,vp);nv=v+h/2*(k1+k2);ny=y+h/2*(v+vp)}
+else{const k1=F(p,v),v2=v+h/2*k1,k2=F(p,v2),v3=v+h/2*k2,k3=F(p,v3),v4=v+h*k3,k4=F(p,v4);nv=v+h/6*(k1+2*k2+2*k3+k4);ny=y+h/6*(v+2*v2+2*v3+v4)}
+v=nv;y=ny;r.push({t:(i+1)*h,v,y})}return r}
+const fin=(p,m,h)=>{const r=run(p,m,h),l=r[r.length-1],e=exact(p,l.t);return{...l,ev:Math.abs(e.v-l.v),ey:Math.abs(e.y-l.y),xv:e.v,xy:e.y}};
+
+function chart(S,o){const W=640,H=300,L=58,R=14,T=14,B=44;
+const xs=S.flatMap(s=>s.p.map(q=>q[0])),ys=S.flatMap(s=>s.p.map(q=>q[1]));
+let x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);if(!o.log)y0=Math.min(0,y0);if(y1<=y0)y1=y0+1;if(x1<=x0)x1=x0+1;
+const X=x=>L+(x-x0)/(x1-x0)*(W-L-R),Y=y=>H-B-(y-y0)/(y1-y0)*(H-T-B);let g='';
+for(let i=0;i<=5;i++){const yv=y0+(y1-y0)*i/5,xv=x0+(x1-x0)*i/5;
+g+=`<line class="gl" x1="${L}" x2="${W-R}" y1="${Y(yv)}" y2="${Y(yv)}"/><text class="tx" x="${L-6}" y="${Y(yv)+4}" text-anchor="end">${o.fy(yv)}</text><line class="gl" x1="${X(xv)}" x2="${X(xv)}" y1="${T}" y2="${H-B}"/><text class="tx" x="${X(xv)}" y="${H-B+16}" text-anchor="middle">${o.fx(xv)}</text>`}
+g+=`<text class="lb" x="${(L+W-R)/2}" y="${H-6}" text-anchor="middle">${o.xl}</text><text class="lb" x="12" y="${(T+H-B)/2}" text-anchor="middle" transform="rotate(-90 12 ${(T+H-B)/2})">${o.yl}</text><text class="lb" x="${L+4}" y="${T+10}" font-weight="700">${o.t}</text>`;
+S.forEach((s,j)=>{const pts=s.p.map(q=>X(q[0]).toFixed(1)+','+Y(q[1]).toFixed(1)).join(' ');
+g+=`<polyline fill="none" stroke="${s.c}" stroke-width="2.2" ${s.d?'stroke-dasharray="6 4"':''} points="${pts}"/>`;
+if(s.p.length<=41)s.p.forEach(q=>g+=`<circle cx="${X(q[0])}" cy="${Y(q[1])}" r="3" fill="${s.c}"/>`);
+g+=`<rect x="${W-R-130}" y="${T+4+j*16}" width="14" height="4" fill="${s.c}"/><text class="tx" x="${W-R-111}" y="${T+10+j*16}">${s.n}</text>`});
+return g}
+
+function series(p,key){const ms=['euler','heun','rk4'].filter(m=>$({euler:'cE',heun:'cH',rk4:'cR'}[m]).checked);
+const ex=[],n=200;for(let i=0;i<=n;i++){const t=p.tf*i/n;ex.push([t,exact(p,t)[key]])}
+return[{n:'Exacta',c:'var(--ex)',d:1,p:ex},...ms.map(m=>({n:NM[m]+' (h='+p.h+')',c:COL[m],p:run(p,m,p.h).map(r=>[r.t,r[key]])}))]}
+
+function update(){
+const p=P(),a=A(p),c=C(p);
+const bad=IDS.some(i=>!Number.isFinite(p[i]))||p.m<=0||p.h<=0||p.tf<=0||p.k<0||p.tf/p.h>5000||p.h>p.tf;
+$('warn').textContent=bad?'Revisa los datos: m, h y tiempo final deben ser positivos, k ≥ 0, h ≤ tiempo final y como máximo 5000 pasos.':'';
+if(bad)return;
+$('modeloNum').textContent=`dv/dt = ${f(p.T,0)}/${f(p.m,0)} − ${f(p.g,2)} − (${f(p.k,0)}/${f(p.m,0)})·v = ${f(a,2)} − ${f(c,3)}·v\ndy/dt = v          v(0) = ${f(p.v0,2)},  y(0) = ${f(p.y0,2)}`;
+$('anNum').textContent=c===0?`v(t) = ${f(p.v0,2)} + ${f(a,2)}·t`:`a/c = ${f(a/c,3)}\nv(t) = ${f(a/c,3)} + (${f(p.v0-a/c,3)})·e^(−${f(c,3)}·t)\ny(t) = ${f(p.y0,2)} + ${f(a/c,3)}·t + (${f(p.v0-a/c,3)})·(1 − e^(−${f(c,3)}·t))/${f(c,3)}`;
+const ex=exact(p,p.tf),ms=['euler','heun','rk4'].filter(m=>$({euler:'cE',heun:'cH',rk4:'cR'}[m]).checked);
+let h=`<div class="card" style="--c:var(--ex)"><b>Exacta en t = ${f(p.tf,1)} s</b><div class="big">v = ${f(ex.v)} m/s<br>y = ${f(ex.y)} m</div></div>`;
+const tv=+$('tv').value,ty=+$('ty').value;
+ms.forEach(m=>{const r=fin(p,m,p.h),ok=r.ev<tv&&r.ey<ty;h+=`<div class="card" style="--c:${COL[m]}"><b>${NM[m]}, h = ${f(p.h,3)} s (${Math.round(p.tf/p.h)} iteraciones)</b><div class="big">v = ${f(r.v)} m/s<br>y = ${f(r.y)} m</div>E<sub>v</sub> = ${f(r.ev)} m/s (${f(100*r.ev/Math.abs(r.xv||1),3)} %)<br>E<sub>y</sub> = ${f(r.ey)} m (${f(100*r.ey/Math.abs(r.xy||1),3)} %)<br><span class="bd ${ok?'y':'n'}">${ok?'cumple':'no cumple'} los límites</span></div>`});
+$('cards').innerHTML=h;
+
+const e=run(p,'euler',p.h);let s='';
+for(let i=1;i<=Math.min(3,e.length-1);i++){const q=e[i-1],r=e[i];
+s+=`<div class="eq">t = ${f(r.t,2)} s\nv(${i}) = ${f(q.v)} + ${f(p.h,2)}·(${f(a,2)} − ${f(c,3)}·${f(q.v)}) = ${f(r.v)} m/s\ny(${i}) = ${f(q.y)} + ${f(p.h,2)}·${f(q.v)} = ${f(r.y)} m</div>`}
+$('steps').innerHTML=s+'<p class="note">Los demás pasos repiten el mismo cálculo hasta llegar al tiempo final (ver tabla).</p>';
+tabla(p);
+const sv=series(p,'v'),sy=series(p,'y');
+$('gv').setAttribute('viewBox','0 0 640 300');$('gy').setAttribute('viewBox','0 0 640 300');$('ge').setAttribute('viewBox','0 0 640 300');
+const o=(t,yl)=>({t,xl:'Tiempo (s)',yl,fx:x=>f(x,1),fy:x=>f(x,x<10?2:0)});
+$('gv').innerHTML=chart(sv,o('Velocidad del cohete','v (m/s)'));$('gy').innerHTML=chart(sy,o('Altura del cohete','y (m)'));
+const es=ms.map(m=>({n:'Error '+NM[m],c:COL[m],p:run(p,m,p.h).map(r=>[r.t,Math.abs(exact(p,r.t).v-r.v)])}));
+if(es.length)$('ge').innerHTML=chart(es,o('Error absoluto de velocidad','|error| (m/s)'));else $('ge').innerHTML='';
+$('gtxt').textContent='Con v creciendo y aceleración decreciente, Euler sobreestima la velocidad (usa la aceleración del inicio del intervalo, que es mayor) y subestima la altura (usa la velocidad del inicio del intervalo, que es menor). Heun y RK4 casi se superponen con la curva exacta.';
+conv(p)}
+
+function tabla(p){const m=$('tm').value,r=run(p,m,p.h);
+$('tab').innerHTML='<tr><th>t (s)</th><th>v '+NM[m]+'</th><th>v exacta</th><th>E<sub>v</sub></th><th>y '+NM[m]+'</th><th>y exacta</th><th>E<sub>y</sub></th></tr>'+r.map(q=>{const e=exact(p,q.t);return`<tr><td>${f(q.t,2)}</td><td>${f(q.v)}</td><td>${f(e.v)}</td><td>${f(Math.abs(e.v-q.v))}</td><td>${f(q.y)}</td><td>${f(e.y)}</td><td>${f(Math.abs(e.y-q.y))}</td></tr>`}).join('')}
+
+function conv(p){const hs=[2,1,.5,.25,.125].filter(h=>p.tf/h<=5000&&h<=p.tf),tv=+$('tv').value,ty=+$('ty').value;
+let t='<tr><th>h (s)</th>'+['euler','heun','rk4'].map(m=>`<th>E<sub>v</sub> ${NM[m]}</th><th>E<sub>y</sub> ${NM[m]}</th>`).join('')+'<th>Euler cumple</th></tr>';
+const D={euler:[],heun:[],rk4:[]};
+hs.forEach(h=>{t+=`<tr><td>${h}</td>`;['euler','heun','rk4'].forEach(m=>{const r=fin(p,m,h);D[m].push([Math.log10(h),Math.log10(Math.max(r.ev,1e-13))]);t+=`<td>${f(r.ev,6)}</td><td>${f(r.ey,5)}</td>`;if(m==='euler')D.eu=r});
+const r=fin(p,'euler',h),ok=r.ev<tv&&r.ey<ty;t+=`<td><span class="bd ${ok?'y':'n'}">${ok?'sí':'no'}</span></td></tr>`});
+$('conv').innerHTML=t;
+if(hs.length>1){$('gc').setAttribute('viewBox','0 0 640 300');
+$('gc').innerHTML=chart(['euler','heun','rk4'].map(m=>({n:NM[m],c:COL[m],p:D[m]})),{log:1,t:'Error de velocidad frente al paso',xl:'paso h (s)',yl:'error (m/s)',fx:x=>(10**x).toPrecision(2).replace('.',','),fy:y=>(10**y).toExponential(0).replace('e-','e−')});
+const e1=fin(p,'euler',hs[0]).ev,e2=fin(p,'euler',hs[1]).ev,r1=fin(p,'rk4',hs[0]).ev,r2=fin(p,'rk4',hs[1]).ev;
+$('ord').textContent=`Al reducir h a la mitad, el error de Euler se divide entre ${f(e1/e2,2)} (≈ 2: método de orden 1). En RK4 se divide entre ${f(r1/r2,1)} (≈ 16: orden 4). Por eso, para el mismo paso, RK4 es el más preciso; Heun (orden 2) queda en medio.`}}
+
+function resp(){const p={...DEF},e=run(p,'euler',2),ex=exact(p,20),fe=fin(p,'euler',2);
+const q=[1,2,5,10].map(i=>`<tr><td>${e[i].t}</td><td>${f(e[i].v)}</td><td>${f(exact(p,e[i].t).v)}</td></tr>`).join('');
+const rs=[1,.5,.25].map(h=>{const r=fin(p,'euler',h);return`<tr><td>${h}</td><td>${f(r.v)}</td><td>${f(r.ev)}</td><td>${f(r.y)}</td><td>${f(r.ey)}</td></tr>`}).join('');
+$('resp').innerHTML=`<details open><summary>1. Velocidad a 2, 4, 10 y 20 s (Euler, h = 2 s)</summary><div class="tw"><table><tr><th>t (s)</th><th>v Euler (m/s)</th><th>v exacta (m/s)</th></tr>${q}</table></div></details>
+<details open><summary>2. Altura a los 20 s</summary><p>Euler: <b>${f(fe.y)} m</b>. Exacta: ${f(ex.y)} m.</p></details>
+<details open><summary>3. Solución analítica</summary><div class="eq">v(t) = 51,9·(1 − e^(−0,1·t))
+y(t) = 51,9·t − 519·(1 − e^(−0,1·t))
+v(20) = ${f(ex.v)} m/s     y(20) = ${f(ex.y)} m</div></details>
+<details open><summary>4. Diferencias entre Euler y la solución exacta</summary><p>A los 20 s el error de velocidad es ${f(fe.ev)} m/s y el de altura ${f(fe.ey)} m. Euler sobreestima v y subestima y porque usa la pendiente del inicio de cada intervalo y arrastra el error de un paso al siguiente.</p></details>
+<details open><summary>5. Efecto de reducir el paso</summary><div class="tw"><table><tr><th>h (s)</th><th>v (m/s)</th><th>E<sub>v</sub></th><th>y (m)</th><th>E<sub>y</sub></th></tr>${rs}</table></div><p>Al reducir h a la mitad, el error se reduce aproximadamente a la mitad. Con h = 0,5 s y 0,25 s se cumplen los límites (E<sub>v</sub> &lt; 0,5 m/s y E<sub>y</sub> &lt; 5 m), a costa de 40 y 80 iteraciones.</p></details>`}
+
+IDS.forEach(i=>$(i).addEventListener('input',update));['cE','cH','cR','tv','ty'].forEach(i=>$(i).addEventListener('input',update));
+$('tm').addEventListener('input',()=>{const p=P();tabla(p)});
+$('reset').addEventListener('click',()=>{IDS.forEach(i=>$(i).value=DEF[i]);update()});
+resp();update();
+</script>
+</body>
+</html>
 
